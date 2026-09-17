@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Квиз: классические композиторы</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  }
+
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 20% 10%, rgba(120, 90, 200, 0.35) 0%, transparent 45%),
+      radial-gradient(circle at 85% 85%, rgba(200, 140, 60, 0.3) 0%, transparent 45%),
+      linear-gradient(160deg, #1a1030 0%, #2a1848 45%, #150a26 100%);
+    color: #f4eefb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow-x: hidden;
+  }
+
+  .quiz {
+    width: 100%;
+    max-width: 640px;
+    background: rgba(30, 20, 55, 0.75);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(190, 160, 255, 0.35);
+    border-radius: 32px;
+    padding: 32px 26px 28px;
+    box-shadow:
+      0 30px 60px -20px rgba(0, 0, 0, 0.85),
+      0 0 50px rgba(140, 100, 240, 0.25),
+      inset 0 1px 1px rgba(255, 255, 255, 0.08);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .quiz::before {
+    content: "🎼";
+    position: absolute;
+    top: -30px;
+    right: -20px;
+    font-size: 180px;
+    opacity: 0.07;
+    transform: rotate(15deg);
+    pointer-events: none;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 22px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .header h1 {
+    font-size: clamp(1.15rem, 4vw, 1.5rem);
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    background: linear-gradient(135deg, #e9d5ff, #b794f6, #f6c177);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .counter {
+    flex-shrink: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #d5c2ff;
+    background: rgba(120, 80, 200, 0.35);
+    border: 1px solid rgba(190, 160, 255, 0.4);
+    padding: 6px 16px;
+    border-radius: 40px;
+    white-space: nowrap;
+  }
+
+  .progress-track {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 26px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #8b5cf6, #c084fc, #f6c177);
+    border-radius: 20px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 14px rgba(180, 130, 255, 0.8);
+  }
+
+  .question {
+    font-size: clamp(1.1rem, 4.2vw, 1.4rem);
+    font-weight: 700;
+    line-height: 1.45;
+    margin-bottom: 24px;
+    min-height: 62px;
+    position: relative;
+    z-index: 2;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    animation: fadeSlide 0.4s ease;
+  }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .option {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    text-align: left;
+    background: rgba(70, 45, 120, 0.45);
+    border: 2px solid rgba(160, 120, 240, 0.35);
+    border-radius: 20px;
+    padding: 16px 18px;
+    font-size: clamp(0.98rem, 3.6vw, 1.1rem);
+    font-weight: 600;
+    color: #ede4ff;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    font-family: inherit;
+    position: relative;
+    overflow: hidden;
+    animation: fadeSlide 0.4s ease backwards;
+  }
+
+  .option:nth-child(1) { animation-delay: 0.05s; }
+  .option:nth-child(2) { animation-delay: 0.1s; }
+  .option:nth-child(3) { animation-delay: 0.15s; }
+  .option:nth-child(4) { animation-delay: 0.2s; }
+
+  .option .letter {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(180, 140, 255, 0.25);
+    border: 1.5px solid rgba(200, 170, 255, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1rem;
+    color: #e5d4ff;
+    transition: all 0.18s ease;
+  }
+
+  .option:hover:not(:disabled) {
+    background: rgba(110, 75, 180, 0.6);
+    border-color: rgba(200, 160, 255, 0.8);
+    transform: translateX(4px);
+    box-shadow: 0 8px 22px -8px rgba(160, 110, 255, 0.7);
+  }
+
+  .option:hover:not(:disabled) .letter {
+    background: rgba(200, 160, 255, 0.5);
+  }
+
+  .option:disabled { cursor: default; }
+
+  .option.correct {
+    background: linear-gradient(135deg, rgba(45, 160, 95, 0.85), rgba(30, 120, 75, 0.9));
+    border-color: #5ee89a;
+    box-shadow: 0 0 24px rgba(80, 230, 150, 0.55);
+    color: #f0fff6;
+  }
+  .option.correct .letter {
+    background: #5ee89a;
+    border-color: #a8ffd0;
+    color: #08351c;
+  }
+
+  .option.wrong {
+    background: linear-gradient(135deg, rgba(180, 50, 70, 0.85), rgba(130, 30, 55, 0.9));
+    border-color: #ff7a94;
+    box-shadow: 0 0 24px rgba(255, 90, 120, 0.5);
+    color: #fff0f2;
+  }
+  .option.wrong .letter {
+    background: #ff7a94;
+    border-color: #ffc4d0;
+    color: #4a0815;
+  }
+
+  .footer {
+    margin-top: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 54px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .feedback {
+    font-size: clamp(0.9rem, 3.4vw, 1rem);
+    font-weight: 700;
+    line-height: 1.35;
+    flex: 1;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.3s, transform 0.3s;
+  }
+  .feedback.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .feedback.good { color: #7df5b0; text-shadow: 0 0 12px rgba(90, 240, 160, 0.7); }
+  .feedback.bad  { color: #ff9db0; text-shadow: 0 0 12px rgba(255, 110, 140, 0.7); }
+
+  .next-btn {
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #9d6bff, #6d3fd6);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    padding: 14px 30px;
+    font-size: clamp(0.95rem, 3.5vw, 1.05rem);
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 8px 0 #3d1f80, 0 12px 26px rgba(0, 0, 0, 0.5), 0 0 24px rgba(150, 100, 255, 0.5);
+    transition: all 0.08s ease;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(4px);
+  }
+  .next-btn.show {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+  .next-btn:active {
+    transform: translateY(5px);
+    box-shadow: 0 3px 0 #3d1f80, 0 6px 16px rgba(0, 0, 0, 0.5);
+  }
+
+  .result {
+    text-align: center;
+    padding: 14px 4px 6px;
+    position: relative;
+    z-index: 2;
+    animation: fadeSlide 0.5s ease;
+  }
+
+  .result .big-emoji {
+    font-size: clamp(56px, 16vw, 88px);
+    line-height: 1;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.5));
+    animation: pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes pop {
+    0%   { transform: scale(0.3); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .result h2 {
+    font-size: clamp(1.4rem, 5.5vw, 1.9rem);
+    font-weight: 900;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #e9d5ff, #f6c177);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .result .score-line {
+    font-size: clamp(1.05rem, 4vw, 1.25rem);
+    font-weight: 700;
+    color: #d8c9ff;
+    margin-bottom: 6px;
+  }
+
+  .result .score-line b {
+    color: #ffd479;
+    font-size: 1.35em;
+    text-shadow: 0 0 18px rgba(255, 200, 90, 0.7);
+  }
+
+  .result .verdict {
+    font-size: clamp(0.98rem, 3.6vw, 1.1rem);
+    color: #b9a8e0;
+    line-height: 1.55;
+    max-width: 440px;
+    margin: 12px auto 26px;
+  }
+
+  .restart-btn {
+    background: linear-gradient(135deg, #f6c177, #e8a94a);
+    color: #2a1600;
+    border: none;
+    border-radius: 50px;
+    padding: 16px 44px;
+    font-size: clamp(1rem, 3.8vw, 1.15rem);
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 8px 0 #a06d1c, 0 14px 30px rgba(0, 0, 0, 0.55), 0 0 30px rgba(255, 190, 90, 0.6);
+    transition: all 0.08s ease;
+  }
+  .restart-btn:active {
+    transform: translateY(5px);
+    box-shadow: 0 3px 0 #a06d1c, 0 6px 16px rgba(0, 0, 0, 0.5);
+  }
+
+  @media (max-width: 420px) {
+    .quiz { padding: 24px 16px 22px; border-radius: 24px; }
+    .option { padding: 14px 14px; gap: 11px; }
+    .option .letter { width: 30px; height: 30px; font-size: 0.9rem; }
+    .header { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .footer { flex-direction: column; align-items: stretch; }
+    .next-btn { width: 100%; }
+    .feedback { text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="quiz" id="quiz">
+
+  <div class="header">
+    <h1>🎼 Великие композиторы</h1>
+    <div class="counter" id="counter">Вопрос 1 / 25</div>
+  </div>
+
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <div id="quizContent">
+    <div class="question" id="questionText">Загрузка…</div>
+    <div class="options" id="optionsBox"></div>
+
+    <div class="footer">
+      <div class="feedback" id="feedback"></div>
+      <button class="next-btn" id="nextBtn" type="button">Далее →</button>
+    </div>
+  </div>
+
+  <div class="result" id="resultScreen" style="display:none;">
+    <div class="big-emoji" id="resultEmoji">🏆</div>
+    <h2 id="resultTitle">Отличный результат!</h2>
+    <div class="score-line">Правильных ответов: <b><span id="finalScore">0</span> / 25</b></div>
+    <div class="verdict" id="verdictText"></div>
+    <button class="restart-btn" id="restartBtn" type="button">Пройти заново</button>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const QUESTIONS = [
+    { question: "Кто написал «Лунную сонату»?", options: ["Вольфганг Амадей Моцарт", "Людвиг ван Бетховен", "Фредерик Шопен", "Иоганн Себастьян Бах"], correct: 1, hint: "«Лунная соната» (№14) — одно из самых известных произведений Бетховена." },
+    { question: "Какой композитор написал балет «Лебединое озеро»?", options: ["Сергей Прокофьев", "Игорь Стравинский", "Пётр Ильич Чайковский", "Дмитрий Шостакович"], correct: 2, hint: "«Лебединое озеро» — знаменитый балет Чайковского, написанный в 1876 году." },
+    { question: "Кто из композиторов ослеп в конце жизни, но продолжал сочинять?", options: ["Иоганн Себастьян Бах", "Георг Фридрих Гендель", "Йозеф Гайдн", "Антонио Вивальди"], correct: 0, hint: "Бах потерял зрение в последние годы жизни, но диктовал музыку ученикам." },
+    { question: "Автор «Реквиема» ре минор, завершённого после его смерти учеником?", options: ["Вольфганг Амадей Моцарт", "Людвиг ван Бетховен", "Иоганнес Брамс", "Франц Шуберт"], correct: 0, hint: "Моцарт не успел закончить «Реквием» — его дописал ученик Франц Зюсмайер." },
+    { question: "Кого называют «королём вальса»?", options: ["Иоганн Штраус (сын)", "Фредерик Шопен", "Ференц Лист", "Рихард Вагнер"], correct: 0, hint: "Иоганн Штраус-сын написал «Голубой Дунай» и сотни вальсов." },
+    { question: "Какой композитор написал «Хорошо темперированный клавир»?", options: ["Георг Фридрих Гендель", "Иоганн Себастьян Бах", "Доменико Скарлатти", "Жан-Филипп Рамо"], correct: 1, hint: "Бах создал два тома прелюдий и фуг во всех 24 тональностях (1722 и 1742)." },
+    { question: "Кто автор оперы «Орфей и Эвридика» (1762), реформаторской для своего времени?", options: ["Кристоф Виллибальд Глюк", "Вольфганг Амадей Моцарт", "Йозеф Гайдн", "Георг Фридрих Гендель"], correct: 0, hint: "Глюк реформировал оперу, подчинив музыку драме и отказавшись от излишеств." },
+    { question: "Какое произведение Мусоргского завершил и оркестровал Морис Равель?", options: ["«Борис Годунов»", "«Картинки с выставки»", "«Хованщина»", "«Сорочинская ярмарка»"], correct: 1, hint: "Равель сделал знаменитую оркестровую версию «Картинок с выставки» в 1922 году." },
+    { question: "Кто написал «Симфонию № 5» со знаменитым мотивом «та-та-та-тааа»?", options: ["Йозеф Гайдн", "Людвиг ван Бетховен", "Иоганнес Брамс", "Густав Малер"], correct: 1, hint: "Пятая симфония Бетховена (1808) — один из самых узнаваемых мотивов в истории музыки." },
+    { question: "Какой композитор написал цикл «Времена года» для скрипки с оркестром?", options: ["Иоганн Себастьян Бах", "Антонио Вивальди", "Арканджело Корелли", "Джузеппе Тартини"], correct: 1, hint: "Вивальди написал «Времена года» около 1723 года — четыре скрипичных концерта." },
+    { question: "Кто автор «Полёта валькирий»?", options: ["Рихард Вагнер", "Рихард Штраус", "Ференц Лист", "Густав Малер"], correct: 0, hint: "«Полёт валькирий» — часть оперы «Валькирия» из тетралогии «Кольцо нибелунга»." },
+    { question: "Какой композитор умер в возрасте 31 года, оставив 9 симфоний и «Реквием»?", options: ["Франц Шуберт", "Феликс Мендельсон", "Вольфганг Амадей Моцарт", "Фредерик Шопен"], correct: 0, hint: "Шуберт прожил всего 31 год, но успел написать более 600 песен и 9 симфоний." },
+    { question: "Кто написал «Болеро» — произведение, построенное на одной неизменной ритмической фигуре?", options: ["Клод Дебюсси", "Морис Равель", "Эрик Сати", "Габриэль Форе"], correct: 1, hint: "Равель написал «Болеро» в 1928 году; сам называл его «оркестровым экспериментом»." },
+    { question: "Какой русский композитор написал балет «Весна священная»?", options: ["Сергей Рахманинов", "Игорь Стравинский", "Николай Римский-Корсаков", "Александр Бородин"], correct: 1, hint: "Премьера «Весны священной» в Париже (1913) вызвала скандал и стала вехой модернизма." },
+    { question: "Кто из композиторов был глухим, но продолжал сочинять?", options: ["Вольфганг Амадей Моцарт", "Людвиг ван Бетховен", "Иоганнес Брамс", "Ференц Лист"], correct: 1, hint: "Бетховен потерял слух к 44 годам, но написал ещё множество великих произведений." },
+    { question: "Какой композитор написал «Праздничную увертюру 1812 год»?", options: ["Пётр Ильич Чайковский", "Модест Мусоргский", "Александр Глазунов", "Сергей Прокофьев"], correct: 0, hint: "Чайковский написал её в 1880 году в честь победы России в Отечественной войне 1812 года." },
+    { question: "Кто автор оперы «Травиата»?", options: ["Джузеппе Верди", "Джакомо Пуччини", "Гаэтано Доницетти", "Винченцо Беллини"], correct: 0, hint: "«Травиата» (1853) — одна из самых исполняемых опер в мире, по мотивам Дюма-сына." },
+    { question: "Какой композитор написал «Танец с саблями» из балета «Гаянэ»?", options: ["Арам Хачатурян", "Дмитрий Шостакович", "Сергей Прокофьев", "Родион Щедрин"], correct: 0, hint: "Хачатурян написал «Танец с саблями» в 1942 году; это один из самых узнаваемых фрагментов." },
+    { question: "Кто из композиторов входил в «Могучую кучку»?", options: ["Пётр Ильич Чайковский", "Модест Мусоргский", "Сергей Рахманинов", "Александр Скрябин"], correct: 1, hint: "«Могучая кучка» — содружество русских композиторов: Мусоргский, Бородин, Римский-Корсаков и др." },
+    { question: "Какой композитор написал «Симфонию № 9» («Из Нового Света»)?", options: ["Антонин Дворжак", "Густав Малер", "Иоганнес Брамс", "Антон Брукнер"], correct: 0, hint: "Дворжак написал её в 1893 году, вдохновляясь Америкой и афроамериканской музыкой." },
+    { question: "Кто автор цикла «Карнавал» для фортепиано?", options: ["Роберт Шуман", "Феликс Мендельсон", "Фредерик Шопен", "Ференц Лист"], correct: 0, hint: "Шуман написал «Карнавал» в 1834–1835 годах — цикл из 21 пьесы." },
+    { question: "Какой композитор написал «Адажио для струнных» — одно из самых печальных произведений XX века?", options: ["Сэмюэл Барбер", "Аарон Копленд", "Леонард Бернстайн", "Джордж Гершвин"], correct: 0, hint: "Барбер написал «Адажио» в 1936 году; оно звучало на похоронах Рузвельта и Кеннеди." },
+    { question: "Кто автор оперы «Пиковая дама»?", options: ["Пётр Ильич Чайковский", "Сергей Прокофьев", "Николай Римский-Корсаков", "Модест Мусоргский"], correct: 0, hint: "Чайковский написал «Пиковую даму» в 1890 году по повести Пушкина." },
+    { question: "Какой композитор написал «Музыку для королевского фейерверка»?", options: ["Георг Фридрих Гендель", "Генри Пёрселл", "Уильям Бёрд", "Эдвард Элгар"], correct: 0, hint: "Гендель написал её в 1749 году для празднования мира в Ахене." },
+    { question: "Кто из композиторов написал «К Элизе»?", options: ["Вольфганг Амадей Моцарт", "Людвиг ван Бетховен", "Фредерик Шопен", "Ференц Лист"], correct: 1, hint: "Бетховен написал багатель «К Элизе» около 1810 года; точный адресат неизвестен." }
+  ];
+
+  const LETTERS = ["А", "Б", "В", "Г"];
+
+  const counter      = document.getElementById('counter');
+  const progressFill = document.getElementById('progressFill');
+  const questionText = document.getElementById('questionText');
+  const optionsBox   = document.getElementById('optionsBox');
+  const feedback     = document.getElementById('feedback');
+  const nextBtn      = document.getElementById('nextBtn');
+  const quizContent  = document.getElementById('quizContent');
+  const resultScreen = document.getElementById('resultScreen');
+  const finalScore   = document.getElementById('finalScore');
+  const resultTitle  = document.getElementById('resultTitle');
+  const resultEmoji  = document.getElementById('resultEmoji');
+  const verdictText  = document.getElementById('verdictText');
+  const restartBtn   = document.getElementById('restartBtn');
+
+  let currentIndex = 0;
+  let score        = 0;
+  let answered     = false;
+
+  function renderQuestion() {
+    const q = QUESTIONS[currentIndex];
+    answered = false;
+
+    counter.textContent = 'Вопрос ' + (currentIndex + 1) + ' / ' + QUESTIONS.length;
+    progressFill.style.width = (currentIndex / QUESTIONS.length * 100) + '%';
+
+    questionText.textContent = q.question;
+    questionText.style.animation = 'none';
+    void questionText.offsetWidth;
+    questionText.style.animation = 'fadeSlide 0.4s ease';
+
+    feedback.textContent = '';
+    feedback.className = 'feedback';
+    nextBtn.classList.remove('show');
+    nextBtn.textContent = (currentIndex === QUESTIONS.length - 1) ? 'Результат →' : 'Далее →';
+
+    optionsBox.innerHTML = '';
+    q.options.forEach(function (text, i) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'option';
+      btn.innerHTML = '<span class="letter">' + LETTERS[i] + '</span><span>' + text + '</span>';
+      btn.addEventListener('click', function () { selectAnswer(i); });
+      optionsBox.appendChild(btn);
+    });
+  }
+
+  function selectAnswer(index) {
+    if (answered) return;
+    answered = true;
+
+    const q = QUESTIONS[currentIndex];
+    const buttons = optionsBox.querySelectorAll('.option');
+    const isCorrect = (index === q.correct);
+
+    buttons.forEach(function (b) { b.disabled = true; });
+    buttons[q.correct].classList.add('correct');
+
+    if (!isCorrect) {
+      buttons[index].classList.add('wrong');
+    }
+
+    if (isCorrect) {
+      score++;
+      feedback.textContent = '✅ Верно! ' + q.hint;
+      feedback.className = 'feedback good show';
+    } else {
+      feedback.textContent = '❌ Неверно. ' + q.hint;
+      feedback.className = 'feedback bad show';
+    }
+
+    progressFill.style.width = ((currentIndex + 1) / QUESTIONS.length * 100) + '%';
+    nextBtn.classList.add('show');
+  }
+
+  function goNext() {
+    if (!answered) return;
+    currentIndex++;
+    if (currentIndex < QUESTIONS.length) {
+      renderQuestion();
+    } else {
+      showResult();
+    }
+  }
+
+  function showResult() {
+    quizContent.style.display = 'none';
+    resultScreen.style.display = 'block';
+    finalScore.textContent = score;
+
+    const total = QUESTIONS.length;
+
+    let emoji, title, verdict;
+    if (score === total) {
+      emoji = '👑';
+      title = 'Абсолютный маэстро!';
+      verdict = 'Все ' + total + ' — идеально! Вы настоящий профессор консерватории.';
+    } else if (score >= 22) {
+      emoji = '🏆';
+      title = 'Виртуоз!';
+      verdict = 'Великолепно! Вы знаете классику на уровне профессионала.';
+    } else if (score >= 18) {
+      emoji = '🎉';
+      title = 'Отличный результат!';
+      verdict = 'Вы глубоко разбираетесь в классической музыке. Браво!';
+    } else if (score >= 13) {
+      emoji = '👍';
+      title = 'Хороший результат!';
+      verdict = 'Крепкие знания! Есть куда расти — особенно в редких произведениях.';
+    } else if (score >= 8) {
+      emoji = '🎵';
+      title = 'Есть над чем поработать';
+      verdict = 'Основы вы знаете, но глубины классики ещё ждут вас.';
+    } else {
+      emoji = '📖';
+      title = 'Стоит повторить материал';
+      verdict = 'Классика бездонна! Попробуйте ещё раз — и результат вырастет.';
+    }
+
+    resultEmoji.textContent = emoji;
+    resultTitle.textContent = title;
+    verdictText.textContent = verdict;
+  }
+
+  function restart() {
+    currentIndex = 0;
+    score = 0;
+    answered = false;
+    resultScreen.style.display = 'none';
+    quizContent.style.display = 'block';
+    renderQuestion();
+  }
+
+  nextBtn.addEventListener('click', goNext);
+  restartBtn.addEventListener('click', restart);
+
+  document.addEventListener('keydown', function (e) {
+    if (resultScreen.style.display === 'block') {
+      if (e.key === 'Enter') restart();
+      return;
+    }
+    if (!answered) {
+      if (['1', '2', '3', '4'].includes(e.key)) {
+        selectAnswer(parseInt(e.key, 10) - 1);
+      }
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      goNext();
+    }
+  });
+
+  renderQuestion();
+})();
+</script>
+</body>
+</html>
